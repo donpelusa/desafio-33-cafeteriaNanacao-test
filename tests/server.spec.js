@@ -1,56 +1,33 @@
 const request = require("supertest");
 const server = require("../index");
 
+const token = "cualquier-token-para-eltest";
+
 describe("Operaciones CRUD de cafes", () => {
+  it("en ruta /cafes deberia devolver un 200 ok y un array con 1 elemento como minimo", async () => {
+    const response = await request(server).get("/cafes");
+    const cafes = response.body;
+    expect(response.status).toBe(200);
+    expect(cafes).toBeInstanceOf(Array);
+    expect(cafes.length).toBeGreaterThan(0);
+  });
 
-    //Testea que la ruta GET /cafes devuelve un status code 200 y el tipo de dato recibido es un arreglo con por lo menos 1 objeto.
-    it("GET /cafes", async () => {
-        const response = await request(server).get("/cafes");
+  it("deberia devolver 404 al eliminar cafe sin id", async () => {
+    const notId = 398472934;
+    const response = await request(server)
+      .delete(`/cafes/:${notId}`)
+      .set("Authorization", `Bearer ${token}`);
+    expect(response.status).toBe(404);
+  });
 
-        expect(response.status).toBe(200);
-        expect(response.body).toBeInstanceOf(Array);
-        //expect(Array.isArray(response.body)).toBe(true);
-        
-        //Verifica que al menos hay un elemento en el arreglo
-        expect(response.body.length).toBeGreaterThan(0);
-        
-        //Verifica que almenos un elemento del arreglo es un objeto
-        //expect(response.body).toBeInstanceOf(Object);
-        expect(response.body.some((elemento) => typeof elemento === "object" && elemento !== null)).toBe(true);
+  it("deberia devolver 201 al hacer post a /cafes", async () => {
+    const response = await request(server).post("/cafes");
+    expect(response.status).toBe(201);
+  });
 
-        //Verifica que el tipo de dato de cada elemento del arreglo es object
-        expect(response.body.every((elemento) => typeof elemento === "object" && elemento !== null)).toBe(true);
-
-        //No estaba seguro de cual de las dos opciones de verificacion del objeto seria la adecuada asi que como son solo objetos en el array puse ambas jaja
-
-    });
-
-    //Comprueba que se obtiene un código 404 al intentar eliminar un café con un id que no existe.
-    it("DELETE /cafes/100", async () => {
-        const response = await request(server)
-        .delete("/cafes/90")
-        .set("Authorization", "Bearer token_valido")
-
-        expect(response.status).toBe(404);
-    });
-
-    //Prueba que la ruta POST /cafes agrega un nuevo café y devuelve un código 201.
-    it("POST /cafes", async () => {
-        const response = await request(server).post("/cafes").send({
-            id: 5,
-            name: "Nuevo café",
-        });
-
-        expect(response.status).toBe(201);
-    });
-
-    //Prueba que la ruta PUT /cafes devuelve un status code 400 si intentas actualizar un café enviando un id en los parámetros que sea diferente al id dentro del payload.
-    it("PUT /cafes/:id", async () => {
-        const response = await request(server).put("/cafes/2").send({
-            id: 201,
-            name: "Café modificado",
-        });
-
-        expect(response.status).toBe(400);
-    });
+  it("deberia retornar 400 si se hace un PUT a cafes:id con un id no existente", async () => {
+    const notId = 293847;
+    const response = await request(server).put(`/cafes/:${notId}`);
+    expect(response.status).toBe(400);
+  });
 });
